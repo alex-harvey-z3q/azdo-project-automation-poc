@@ -17,7 +17,11 @@ This stack also manages common project-space resources:
 
 - Git repositories declared in `repositories`
 - Azure DevOps teams declared in `teams`
+- Non-secret variable groups declared in `variable_groups`
+- Managed repository files declared in `repository_files`
+- YAML build definitions declared in `build_definitions`
 - Default-branch pull request policies for managed repositories
+- Build-validation branch policies tied to managed build definitions
 
 The current repository policy set demonstrates defaults and per-repository
 overrides:
@@ -27,6 +31,17 @@ overrides:
 - `platform` is stricter, requiring two reviewers and linked work items.
 - `application` allows squash and rebase/fast-forward merges, and does not
   require linked work items.
+
+The configuration also exposes optional maps for resource types that often need
+external identifiers:
+
+- `repository_status_check_policies` for external status checks
+- `git_permissions` for group-descriptor-based Git permissions
+
+Service endpoints, agent pools, external package feeds, and inherited process
+customisation are intentionally not enabled in the default PoC because they are
+organisation-scoped, credential-heavy, or require identifiers that should be
+designed before being committed to state.
 
 ## Outside This State
 
@@ -45,6 +60,9 @@ For this stack, the PAT needs at least:
 
 - Project and Team: read, write, and manage
 - Code: read, write, and manage
+- Build: read and execute
+- Variable Groups: read, create, and manage
+- Security: manage, if using `git_permissions`
 
 Additional Azure DevOps resources will need matching scopes.
 

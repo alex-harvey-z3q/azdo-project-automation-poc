@@ -25,3 +25,19 @@ output "team_descriptors" {
     for key, team in azuredevops_team.this : key => team.descriptor
   }
 }
+
+// Managed variable group IDs exported for pipeline and permission review.
+output "variable_group_ids" {
+  description = "Managed Azure DevOps variable group IDs."
+  value = {
+    for key, group in azuredevops_variable_group.this : key => group.id
+  }
+}
+
+// Managed build definition IDs exported for branch policy and operator review.
+output "build_definition_ids" {
+  description = "Managed Azure DevOps build definition IDs."
+  value = {
+    for key, definition in azuredevops_build_definition.this : key => definition.id
+  }
+}

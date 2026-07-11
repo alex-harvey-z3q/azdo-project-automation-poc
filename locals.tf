@@ -5,6 +5,17 @@ locals {
   project         = var.project
   repositories    = var.repositories
   teams           = var.teams
+  variable_groups = var.variable_groups
+
+  repository_files = {
+    for key, file in var.repository_files : key => file
+    if contains(keys(local.repositories), file.repository_key)
+  }
+
+  build_definitions = {
+    for key, definition in var.build_definitions : key => definition
+    if contains(keys(local.repositories), definition.repository_key)
+  }
 
   // Azure DevOps project features owned by this stack.
   project_features = {
@@ -62,4 +73,19 @@ locals {
       }
     }
   )
+
+  repository_build_validation_policies = {
+    for key, policy in var.repository_build_validation_policies : key => policy
+    if contains(keys(local.repositories), policy.repository_key) && contains(keys(local.build_definitions), policy.build_definition_key)
+  }
+
+  repository_status_check_policies = {
+    for key, policy in var.repository_status_check_policies : key => policy
+    if contains(keys(local.repositories), policy.repository_key)
+  }
+
+  git_permissions = {
+    for key, permission in var.git_permissions : key => permission
+    if permission.repository_key == null || contains(keys(local.repositories), permission.repository_key)
+  }
 }

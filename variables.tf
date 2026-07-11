@@ -62,6 +62,47 @@ variable "teams" {
   default = {}
 }
 
+variable "variable_groups" {
+  description = "Non-secret Azure DevOps variable groups owned by this project space."
+  type = map(object({
+    name         = string
+    description  = optional(string, "Managed by Terraform.")
+    allow_access = optional(bool, false)
+    variables    = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "repository_files" {
+  description = "Files committed into managed Git repositories."
+  type = map(object({
+    repository_key      = string
+    file                = string
+    content             = string
+    branch              = optional(string, "refs/heads/main")
+    commit_message      = optional(string, "Manage file with Terraform")
+    overwrite_on_create = optional(bool, true)
+  }))
+  default = {}
+}
+
+variable "build_definitions" {
+  description = "YAML build definitions backed by managed Azure Repos repositories."
+  type = map(object({
+    name                = string
+    repository_key      = string
+    yml_path            = string
+    path                = optional(string, "\\")
+    branch_name         = optional(string, "refs/heads/main")
+    queue_status        = optional(string, "enabled")
+    agent_pool_name     = optional(string, "Azure Pipelines")
+    agent_specification = optional(string, "ubuntu-latest")
+    variable_group_keys = optional(set(string), [])
+    variables           = optional(map(string), {})
+  }))
+  default = {}
+}
+
 variable "repository_branch_policies" {
   description = "Default branch pull request policies applied to managed repositories."
   type = object({
@@ -83,6 +124,53 @@ variable "repository_branch_policies" {
       allow_basic_no_fast_forward   = optional(bool, false)
     }), {})
   })
+  default = {}
+}
+
+variable "repository_build_validation_policies" {
+  description = "Build validation branch policies keyed by policy name."
+  type = map(object({
+    repository_key              = string
+    build_definition_key        = string
+    display_name                = string
+    enabled                     = optional(bool, true)
+    blocking                    = optional(bool, true)
+    branch                      = optional(string, "refs/heads/main")
+    queue_on_source_update_only = optional(bool, true)
+    manual_queue_only           = optional(bool, false)
+    valid_duration              = optional(number, 720)
+    filename_patterns           = optional(list(string), [])
+  }))
+  default = {}
+}
+
+variable "repository_status_check_policies" {
+  description = "External status check branch policies keyed by policy name."
+  type = map(object({
+    repository_key       = string
+    name                 = string
+    display_name         = optional(string)
+    genre                = optional(string)
+    author_id            = optional(string)
+    enabled              = optional(bool, true)
+    blocking             = optional(bool, true)
+    branch               = optional(string, "refs/heads/main")
+    invalidate_on_update = optional(bool, true)
+    applicability        = optional(string, "default")
+    filename_patterns    = optional(list(string), [])
+  }))
+  default = {}
+}
+
+variable "git_permissions" {
+  description = "Optional Git permissions. Principals must be Azure DevOps group descriptors."
+  type = map(object({
+    principal      = string
+    permissions    = map(string)
+    repository_key = optional(string)
+    branch_name    = optional(string)
+    replace        = optional(bool, false)
+  }))
   default = {}
 }
 

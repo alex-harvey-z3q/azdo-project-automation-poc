@@ -34,6 +34,82 @@ resource "azuredevops_team" "this" {
   name       = each.value.name
 }
 
+resource "azuredevops_variable_group" "this" {
+  for_each = local.variable_groups
+
+  project_id   = azuredevops_project.this.id
+  name         = each.value.name
+  description  = each.value.description
+  allow_access = each.value.allow_access
+
+  dynamic "variable" {
+    for_each = each.value.variables
+
+    content {
+      name  = variable.key
+      value = variable.value
+    }
+  }
+}
+
+resource "azuredevops_git_repository_file" "this" {
+  for_each = local.repository_files
+
+  repository_id       = azuredevops_git_repository.this[each.value.repository_key].id
+  file                = each.value.file
+  content             = each.value.content
+  branch              = each.value.branch
+  commit_message      = each.value.commit_message
+  overwrite_on_create = each.value.overwrite_on_create
+
+  depends_on = [
+    azuredevops_git_repository.this,
+  ]
+}
+
+resource "azuredevops_build_definition" "this" {
+  for_each = local.build_definitions
+
+  project_id          = azuredevops_project.this.id
+  name                = each.value.name
+  path                = each.value.path
+  queue_status        = each.value.queue_status
+  agent_pool_name     = each.value.agent_pool_name
+  agent_specification = each.value.agent_specification
+  variable_groups = [
+    for key in each.value.variable_group_keys : azuredevops_variable_group.this[key].id
+    if contains(keys(azuredevops_variable_group.this), key)
+  ]
+
+  ci_trigger {
+    use_yaml = true
+  }
+
+  features {
+    skip_first_run = true
+  }
+
+  repository {
+    repo_type   = "TfsGit"
+    repo_id     = azuredevops_git_repository.this[each.value.repository_key].id
+    branch_name = each.value.branch_name
+    yml_path    = each.value.yml_path
+  }
+
+  dynamic "variable" {
+    for_each = each.value.variables
+
+    content {
+      name  = variable.key
+      value = variable.value
+    }
+  }
+
+  depends_on = [
+    azuredevops_git_repository_file.this,
+  ]
+}
+
 resource "azuredevops_branch_policy_min_reviewers" "this" {
   for_each = {
     for key, policy in local.repository_branch_policy_settings : key => policy
@@ -57,6 +133,76 @@ resource "azuredevops_branch_policy_min_reviewers" "this" {
       match_type     = "Exact"
     }
   }
+
+  depends_on = [
+    azuredevops_git_repository_file.this,
+  ]
+}
+
+resource "azuredevops_branch_policy_build_validation" "this" {
+  for_each = local.repository_build_validation_policies
+
+  project_id = azuredevops_project.this.id
+  enabled    = each.value.enabled
+  blocking   = each.value.blocking
+
+  settings {
+    build_definition_id         = azuredevops_build_definition.this[each.value.build_definition_key].id
+    display_name                = each.value.display_name
+    queue_on_source_update_only = each.value.queue_on_source_update_only
+    manual_queue_only           = each.value.manual_queue_only
+    valid_duration              = each.value.valid_duration
+    filename_patterns           = each.value.filename_patterns
+
+    scope {
+      repository_id  = azuredevops_git_repository.this[each.value.repository_key].id
+      repository_ref = each.value.branch
+      match_type     = "Exact"
+    }
+  }
+
+  depends_on = [
+    azuredevops_build_definition.this,
+  ]
+}
+
+resource "azuredevops_branch_policy_status_check" "this" {
+  for_each = local.repository_status_check_policies
+
+  project_id = azuredevops_project.this.id
+  enabled    = each.value.enabled
+  blocking   = each.value.blocking
+
+  settings {
+    name                 = each.value.name
+    display_name         = each.value.display_name
+    genre                = each.value.genre
+    author_id            = each.value.author_id
+    invalidate_on_update = each.value.invalidate_on_update
+    applicability        = each.value.applicability
+    filename_patterns    = each.value.filename_patterns
+
+    scope {
+      repository_id  = azuredevops_git_repository.this[each.value.repository_key].id
+      repository_ref = each.value.branch
+      match_type     = "Exact"
+    }
+  }
+
+  depends_on = [
+    azuredevops_git_repository_file.this,
+  ]
+}
+
+resource "azuredevops_git_permissions" "this" {
+  for_each = local.git_permissions
+
+  project_id    = azuredevops_project.this.id
+  repository_id = each.value.repository_key == null ? null : azuredevops_git_repository.this[each.value.repository_key].id
+  branch_name   = each.value.branch_name
+  principal     = each.value.principal
+  permissions   = each.value.permissions
+  replace       = each.value.replace
 }
 
 resource "azuredevops_branch_policy_comment_resolution" "this" {
@@ -76,6 +222,10 @@ resource "azuredevops_branch_policy_comment_resolution" "this" {
       match_type     = "Exact"
     }
   }
+
+  depends_on = [
+    azuredevops_git_repository_file.this,
+  ]
 }
 
 resource "azuredevops_branch_policy_work_item_linking" "this" {
@@ -95,6 +245,10 @@ resource "azuredevops_branch_policy_work_item_linking" "this" {
       match_type     = "Exact"
     }
   }
+
+  depends_on = [
+    azuredevops_git_repository_file.this,
+  ]
 }
 
 resource "azuredevops_branch_policy_merge_types" "this" {
@@ -119,4 +273,8 @@ resource "azuredevops_branch_policy_merge_types" "this" {
       match_type     = "Exact"
     }
   }
+
+  depends_on = [
+    azuredevops_git_repository_file.this,
+  ]
 }

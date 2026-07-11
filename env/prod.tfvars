@@ -26,6 +26,92 @@ teams = {
   }
 }
 
+variable_groups = {
+  shared = {
+    name         = "shared-non-secret"
+    description  = "Shared non-secret variables for the project space."
+    allow_access = true
+    variables = {
+      ENVIRONMENT = "prod"
+      OWNER       = "terraform"
+    }
+  }
+}
+
+repository_files = {
+  platform_readme = {
+    repository_key = "platform"
+    file           = "README.md"
+    content        = <<EOT
+# Platform
+
+Managed by Terraform as part of the Azure DevOps project automation proof-of-concept.
+EOT
+    commit_message = "Add platform README"
+  }
+
+  platform_pipeline = {
+    repository_key = "platform"
+    file           = "azure-pipelines.yml"
+    content        = <<EOT
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo "Validate platform project space"
+  displayName: Validate
+EOT
+    commit_message = "Add platform pipeline"
+  }
+
+  application_readme = {
+    repository_key = "application"
+    file           = "README.md"
+    content        = <<EOT
+# Application
+
+Managed by Terraform as part of the Azure DevOps project automation proof-of-concept.
+EOT
+    commit_message = "Add application README"
+  }
+
+  application_pipeline = {
+    repository_key = "application"
+    file           = "azure-pipelines.yml"
+    content        = <<EOT
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo "Validate application project space"
+  displayName: Validate
+EOT
+    commit_message = "Add application pipeline"
+  }
+}
+
+build_definitions = {
+  platform_ci = {
+    name                = "platform-ci"
+    repository_key      = "platform"
+    yml_path            = "azure-pipelines.yml"
+    variable_group_keys = ["shared"]
+  }
+
+  application_ci = {
+    name                = "application-ci"
+    repository_key      = "application"
+    yml_path            = "azure-pipelines.yml"
+    variable_group_keys = ["shared"]
+  }
+}
+
 repository_branch_policies = {
   reviewer_count              = 1
   last_pusher_cannot_approve  = true
@@ -37,6 +123,22 @@ repository_branch_policies = {
     allow_rebase_and_fast_forward = false
     allow_rebase_with_merge       = false
     allow_basic_no_fast_forward   = false
+  }
+}
+
+repository_build_validation_policies = {
+  platform_ci = {
+    repository_key       = "platform"
+    build_definition_key = "platform_ci"
+    display_name         = "platform-ci"
+    filename_patterns    = ["/src/*", "/azure-pipelines.yml"]
+  }
+
+  application_ci = {
+    repository_key       = "application"
+    build_definition_key = "application_ci"
+    display_name         = "application-ci"
+    filename_patterns    = ["/src/*", "/azure-pipelines.yml"]
   }
 }
 
