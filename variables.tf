@@ -43,3 +43,37 @@ variable "project" {
     error_message = "project.work_item_template must be one of Agile, Basic, CMMI, or Scrum."
   }
 }
+
+variable "repositories" {
+  description = "Git repositories owned by this project space."
+  type = map(object({
+    name           = string
+    default_branch = optional(string, "refs/heads/main")
+    disabled       = optional(bool, false)
+  }))
+  default = {}
+}
+
+variable "teams" {
+  description = "Azure DevOps teams owned by this project space."
+  type = map(object({
+    name = string
+  }))
+  default = {}
+}
+
+variable "repository_branch_policies" {
+  description = "Default branch pull request policies applied to managed repositories."
+  type = object({
+    enabled                      = optional(bool, true)
+    blocking                     = optional(bool, true)
+    reviewer_count               = optional(number, 1)
+    submitter_can_vote           = optional(bool, false)
+    last_pusher_cannot_approve   = optional(bool, true)
+    on_push_reset_approved_votes = optional(bool, true)
+    comment_resolution_required  = optional(bool, true)
+    work_item_linking_required   = optional(bool, false)
+    repositories                 = optional(set(string), [])
+  })
+  default = {}
+}

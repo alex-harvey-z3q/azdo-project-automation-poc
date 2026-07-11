@@ -13,6 +13,17 @@ Terraform state is kept local for this proof-of-concept. Do not commit
 work item process, and the enabled project features. Boards, Repositories, and
 Pipelines are enabled. Test Plans and Artifacts are disabled.
 
+This stack also manages common project-space resources:
+
+- Git repositories declared in `repositories`
+- Azure DevOps teams declared in `teams`
+- Default-branch pull request policies for managed repositories
+
+The current repository policy set requires at least one reviewer, prevents the
+last pusher from approving their own change, resets approvals on push, and
+requires comment resolution. Work item linking is modelled but disabled by
+default for the proof-of-concept.
+
 ## Outside This State
 
 Keep personal access tokens, repository contents, pipelines, service
@@ -26,8 +37,12 @@ it through the current shell instead of writing it to a tfvars file:
 export TF_VAR_personal_access_token="your-pat"
 ```
 
-For this stack, the PAT needs at least Project and Team read, write, and manage
-permission. Additional Azure DevOps resources will need matching scopes.
+For this stack, the PAT needs at least:
+
+- Project and Team: read, write, and manage
+- Code: read, write, and manage
+
+Additional Azure DevOps resources will need matching scopes.
 
 ## Make Targets
 
