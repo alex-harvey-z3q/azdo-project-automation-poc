@@ -74,6 +74,37 @@ variable "repository_branch_policies" {
     comment_resolution_required  = optional(bool, true)
     work_item_linking_required   = optional(bool, false)
     repositories                 = optional(set(string), [])
+    merge_types = optional(object({
+      enabled                       = optional(bool, true)
+      blocking                      = optional(bool, true)
+      allow_squash                  = optional(bool, true)
+      allow_rebase_and_fast_forward = optional(bool, false)
+      allow_rebase_with_merge       = optional(bool, false)
+      allow_basic_no_fast_forward   = optional(bool, false)
+    }), {})
   })
+  default = {}
+}
+
+variable "repository_branch_policy_overrides" {
+  description = "Repository-specific pull request policy overrides keyed by repository map key."
+  type = map(object({
+    enabled                      = optional(bool)
+    blocking                     = optional(bool)
+    reviewer_count               = optional(number)
+    submitter_can_vote           = optional(bool)
+    last_pusher_cannot_approve   = optional(bool)
+    on_push_reset_approved_votes = optional(bool)
+    comment_resolution_required  = optional(bool)
+    work_item_linking_required   = optional(bool)
+    merge_types = optional(object({
+      enabled                       = optional(bool)
+      blocking                      = optional(bool)
+      allow_squash                  = optional(bool)
+      allow_rebase_and_fast_forward = optional(bool)
+      allow_rebase_with_merge       = optional(bool)
+      allow_basic_no_fast_forward   = optional(bool)
+    }))
+  }))
   default = {}
 }

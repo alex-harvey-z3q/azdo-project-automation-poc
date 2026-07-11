@@ -19,10 +19,14 @@ This stack also manages common project-space resources:
 - Azure DevOps teams declared in `teams`
 - Default-branch pull request policies for managed repositories
 
-The current repository policy set requires at least one reviewer, prevents the
-last pusher from approving their own change, resets approvals on push, and
-requires comment resolution. Work item linking is modelled but disabled by
-default for the proof-of-concept.
+The current repository policy set demonstrates defaults and per-repository
+overrides:
+
+- All managed repositories require pull request reviews, comment resolution,
+  and constrained merge strategies.
+- `platform` is stricter, requiring two reviewers and linked work items.
+- `application` allows squash and rebase/fast-forward merges, and does not
+  require linked work items.
 
 ## Outside This State
 
