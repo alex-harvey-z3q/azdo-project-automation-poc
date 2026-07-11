@@ -111,3 +111,7 @@ terraform destroy -var-file=env/prod.tfvars
 
 Do not destroy this state once the project contains useful repositories, boards,
 pipelines, service connections, or other project assets.
+
+## License
+
+MIT.
