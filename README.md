@@ -26,10 +26,51 @@ export TF_VAR_personal_access_token="your-pat"
 For this stack, the PAT needs at least Project and Team read, write, and manage
 permission. Additional Azure DevOps resources will need matching scopes.
 
-## Validate
+## Make Targets
+
+Common Terraform commands are wrapped by `make`. The default environment is
+`prod`, which maps to `env/prod.tfvars`.
+
+```sh
+make help
+```
 
 Initialise Terraform with the same backend configuration pattern used by the
-Keystone stacks, then run formatting and validation checks:
+Keystone stacks:
+
+```sh
+make init \
+  BACKEND_RESOURCE_GROUP_NAME=<state-resource-group> \
+  BACKEND_STORAGE_ACCOUNT_NAME=<state-storage-account> \
+  BACKEND_CONTAINER_NAME=<state-container>
+```
+
+Run local checks:
+
+```sh
+make check
+```
+
+Create and apply a saved plan:
+
+```sh
+make plan
+make apply
+```
+
+Use another environment by overriding `ENV`:
+
+```sh
+make plan ENV=prod
+```
+
+## Raw Terraform Commands
+
+The equivalent raw Terraform workflow is kept here for troubleshooting.
+
+## Validate
+
+Initialise Terraform, then run formatting and validation checks:
 
 ```sh
 terraform init \
