@@ -4,6 +4,9 @@ This stack owns a minimal Azure DevOps project inside the existing
 `https://dev.azure.com/alexharv074` organisation. The organisation itself is
 bootstrap state and is not created by this configuration.
 
+Terraform state is kept local for this proof-of-concept. Do not commit
+`terraform.tfstate`, plan files, or local Terraform working directories.
+
 ## Managed Resources
 
 `azuredevops_project.this` manages the project, Git version control, the Basic
@@ -35,14 +38,10 @@ Common Terraform commands are wrapped by `make`. The default environment is
 make help
 ```
 
-Initialise Terraform with the same backend configuration pattern used by the
-Keystone stacks:
+Initialise Terraform with local state:
 
 ```sh
-make init \
-  BACKEND_RESOURCE_GROUP_NAME=<state-resource-group> \
-  BACKEND_STORAGE_ACCOUNT_NAME=<state-storage-account> \
-  BACKEND_CONTAINER_NAME=<state-container>
+make init
 ```
 
 Run local checks:
@@ -73,10 +72,7 @@ The equivalent raw Terraform workflow is kept here for troubleshooting.
 Initialise Terraform, then run formatting and validation checks:
 
 ```sh
-terraform init \
-  -backend-config="resource_group_name=<state-resource-group>" \
-  -backend-config="storage_account_name=<state-storage-account>" \
-  -backend-config="container_name=<state-container>"
+terraform init
 terraform fmt -check
 terraform validate
 ```
