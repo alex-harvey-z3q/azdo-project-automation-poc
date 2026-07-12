@@ -7,3 +7,4 @@
 providers/terraform-provider-azdoboard/bin/
 providers/terraform-provider-azdoboard/.gocache/
 providers/terraform-provider-azdoboard/.gomodcache/
+**/__pycache__
