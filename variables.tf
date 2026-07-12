@@ -62,6 +62,12 @@ variable "teams" {
   default = {}
 }
 
+variable "enable_boards" {
+  description = "Whether to manage Azure DevOps board settings with the local custom provider."
+  type        = bool
+  default     = false
+}
+
 variable "boards" {
   description = "Azure DevOps team board column layouts owned by this project space."
   type = map(object({

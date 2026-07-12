@@ -3,6 +3,7 @@ SHELL := /bin/sh
 ENV ?= prod
 VAR_FILE ?= env/$(ENV).tfvars
 PLAN_FILE ?= .terraform/$(ENV).tfplan
+ENABLE_BOARDS ?= false
 TF_CLI_CONFIG_FILE := $(CURDIR)/.terraformrc
 AZDOBOARD_PROVIDER_DIR := providers/terraform-provider-azdoboard
 GO_CACHE_DIR := $(CURDIR)/$(AZDOBOARD_PROVIDER_DIR)/.gocache
@@ -32,13 +33,13 @@ validate: provider-build provider-devrc ## Validate Terraform configuration.
 check: provider-check fmt-check validate ## Run local static checks.
 
 plan: provider-build provider-devrc ## Write a Terraform plan for the selected environment.
-	terraform plan -input=false -var-file="$(VAR_FILE)" -out="$(PLAN_FILE)"
+	terraform plan -input=false -var-file="$(VAR_FILE)" -var="enable_boards=$(ENABLE_BOARDS)" -out="$(PLAN_FILE)"
 
 apply: provider-build provider-devrc ## Apply the saved Terraform plan for the selected environment.
 	terraform apply "$(PLAN_FILE)"
 
 destroy: provider-build provider-devrc ## Destroy resources for the selected environment.
-	terraform destroy -input=false -var-file="$(VAR_FILE)"
+	terraform destroy -input=false -var-file="$(VAR_FILE)" -var="enable_boards=$(ENABLE_BOARDS)"
 
 output: provider-devrc ## Show Terraform outputs.
 	terraform output

@@ -18,7 +18,6 @@ This stack also manages common project-space resources:
 - Git repositories declared in `repositories`
 - Azure DevOps teams declared in `teams`
 - Non-secret variable groups declared in `variable_groups`
-- Board column layouts declared in `boards`
 - Managed repository files declared in `repository_files`
 - YAML build definitions declared in `build_definitions`
 - Default-branch pull request policies for managed repositories
@@ -54,11 +53,12 @@ The official Azure DevOps provider does not expose every board setting. This
 repository includes a small local provider proof-of-concept at
 `providers/terraform-provider-azdoboard`.
 
-It currently configures team Area Path and backlog settings, then manages the
-columns of an existing Azure DevOps team board through the Azure DevOps Work
-REST API. The root stack wires this provider into the normal `make init`,
-`make check`, `make plan`, and `make apply` workflow. `examples/azdoboard-board`
-is retained only as a standalone reference.
+It can configure team Area Path and backlog settings, then manage the columns
+of an existing Azure DevOps team board through the Azure DevOps Work REST API.
+This is disabled by default because Azure DevOps boards are built-in team
+surfaces and do not have useful destroy semantics. Set `ENABLE_BOARDS=true`
+when planning to opt in to this part of the PoC. `examples/azdoboard-board` is
+retained only as a standalone reference.
 
 The Makefile writes a local `.terraformrc` that points Terraform at the provider
 binary under `providers/terraform-provider-azdoboard/bin`. Terraform will warn
@@ -86,11 +86,13 @@ export TF_VAR_personal_access_token="your-pat"
 For this stack, the PAT needs at least:
 
 - Project and Team: read, write, and manage
-- Boards or Work Items: read and write, for board column layout updates
 - Code: read, write, and manage
 - Build: read and execute
 - Variable Groups: read, create, and manage
 - Security: manage, if using `git_permissions`
+
+When `ENABLE_BOARDS=true`, the PAT also needs Boards or Work Items read/write
+access for board layout updates.
 
 Additional Azure DevOps resources will need matching scopes.
 
@@ -122,6 +124,13 @@ make plan
 make apply
 ```
 
+Board management is off by default. Opt in explicitly:
+
+```sh
+make plan ENABLE_BOARDS=true
+make apply
+```
+
 Use another environment by overriding `ENV`:
 
 ```sh
@@ -147,6 +156,13 @@ terraform validate
 ```sh
 terraform plan -var-file=env/prod.tfvars
 terraform apply -var-file=env/prod.tfvars
+```
+
+To include Azure DevOps board management with raw Terraform:
+
+```sh
+terraform plan -var-file=env/prod.tfvars -var='enable_boards=true'
+terraform apply
 ```
 
 After apply completes, open the emitted `project_url` output.

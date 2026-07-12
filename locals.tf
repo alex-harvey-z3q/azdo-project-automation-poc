@@ -7,7 +7,7 @@ locals {
   teams           = var.teams
   boards = {
     for key, board in var.boards : key => board
-    if contains(keys(local.teams), board.team_key)
+    if var.enable_boards && contains(keys(local.teams), board.team_key)
   }
   board_team_settings = {
     for key, board in local.boards : board.team_key => {
