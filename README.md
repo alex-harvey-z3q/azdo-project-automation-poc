@@ -1,11 +1,58 @@
 # AzDo Project Automation Proof-of-concept
 
-This stack owns a minimal Azure DevOps project inside the existing
-`https://dev.azure.com/alexharv074` organisation. The organisation itself is
+This stack demoes a minimal Azure DevOps project. The organisation itself is
 bootstrap state and is not created by this configuration.
 
-Terraform state is kept local for this proof-of-concept. Do not commit
-`terraform.tfstate`, plan files, or local Terraform working directories.
+Terraform state is kept local for this proof-of-concept.
+
+## Model
+
+```text
+Modelled here:
+
+(Org)
+|
++-- Terraform local state
+|   |
+|   +-- azuredevops_project
+|   |   +-- Basic work item process
+|   |   +-- Boards feature enabled
+|   |   +-- Repositories feature enabled
+|   |   +-- Pipelines feature enabled
+|   |
+|   +-- azuredevops_team
+|   |   +-- Platform
+|   |   +-- Application
+|   |
+|   +-- azuredevops_git_repository
+|   |   +-- platform
+|   |   |   +-- README.md
+|   |   |   +-- azure-pipelines.yml
+|   |   +-- application
+|   |       +-- README.md
+|   |       +-- azure-pipelines.yml
+|   |
+|   +-- azuredevops_variable_group
+|   |   +-- shared-non-secret
+|   |
+|   +-- azuredevops_build_definition
+|   |   +-- platform-ci
+|   |   +-- application-ci
+|   |
+|   +-- azuredevops_branch_policy_*
+|       +-- minimum reviewers
+|       +-- comment resolution
+|       +-- work item linking
+|       +-- merge strategy
+|       +-- build validation
+|
++-- Board reconciliation outside Terraform
+    |
+    +-- scripts/azdo_boards.py
+        +-- team Area Path settings
+        +-- team backlog iteration settings
+        +-- board columns for declared team boards
+```
 
 ## Managed Resources
 
@@ -70,14 +117,37 @@ Build and test it with:
 make provider-check
 ```
 
+## Note about modeling AzDo boards
+
+Azure DevOps team boards are not standalone resources with clean create and
+destroy semantics. The better fit for board setup is an idempotent
+reconciliation step that configures the board after Terraform has
+created the project and teams.
+
+This repository includes that parallel path in `scripts/azdo_boards.py`. It
+reads the same `boards` map from `env/prod.tfvars`, resolves the Terraform team
+keys to Azure DevOps team names, updates team Area Path and backlog settings,
+and applies the desired board columns through the Azure DevOps Work REST API.
+
+Run a dry-run first:
+
+```sh
+make boards-plan
+```
+
+Apply the board settings:
+
+```sh
+make boards-apply
+```
+
+The reconciler uses `AZDO_PERSONAL_ACCESS_TOKEN` or
+`TF_VAR_personal_access_token`. It does not use Terraform state, provider
+development overrides, or `~/.terraformrc`.
+
 ## Outside This State
 
-Keep personal access tokens, repository contents, pipelines, service
-connections, variable groups, and organisation-level policy out of this state
-unless a reviewed design explicitly accounts for ownership and secret handling.
-
-The Azure DevOps provider requires a PAT at plan and apply time. Prefer passing
-it through the current shell instead of writing it to a tfvars file:
+The Azure DevOps provider expects a PAT at plan and apply time:
 
 ```sh
 export TF_VAR_personal_access_token="your-pat"
@@ -136,47 +206,6 @@ Use another environment by overriding `ENV`:
 ```sh
 make plan ENV=prod
 ```
-
-## Raw Terraform Commands
-
-The equivalent raw Terraform workflow is kept here for troubleshooting.
-
-## Validate
-
-Initialise Terraform, then run formatting and validation checks:
-
-```sh
-terraform init
-terraform fmt -check
-terraform validate
-```
-
-## Plan And Apply
-
-```sh
-terraform plan -var-file=env/prod.tfvars
-terraform apply -var-file=env/prod.tfvars
-```
-
-To include Azure DevOps board management with raw Terraform:
-
-```sh
-terraform plan -var-file=env/prod.tfvars -var='enable_boards=true'
-terraform apply
-```
-
-After apply completes, open the emitted `project_url` output.
-
-## Tear Down
-
-For a disposable project only:
-
-```sh
-terraform destroy -var-file=env/prod.tfvars
-```
-
-Do not destroy this state once the project contains useful repositories, boards,
-pipelines, service connections, or other project assets.
 
 ## License
 

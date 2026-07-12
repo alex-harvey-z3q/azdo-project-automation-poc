@@ -5,6 +5,10 @@ locals {
   project         = var.project
   repositories    = var.repositories
   teams           = var.teams
+
+  // Azure DevOps boards are built-in team/process surfaces rather than cleanly
+  // createable/deletable resources. Keep the custom Terraform provider path
+  // disabled by default and prefer scripts/azdo_boards.py for board reconciliation.
   boards = {
     for key, board in var.boards : key => board
     if var.enable_boards && contains(keys(local.teams), board.team_key)

@@ -34,6 +34,8 @@ resource "azuredevops_team" "this" {
   name       = each.value.name
 }
 
+// Optional custom-provider PoC only. Azure DevOps boards already exist as team
+// work surfaces, so Terraform cannot honestly own their create/destroy lifecycle.
 resource "azdoboard_team_settings" "this" {
   for_each = local.board_team_settings
 
