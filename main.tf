@@ -34,6 +34,34 @@ resource "azuredevops_team" "this" {
   name       = each.value.name
 }
 
+resource "azdoboard_team_settings" "this" {
+  for_each = local.board_team_settings
+
+  project                 = azuredevops_project.this.name
+  team                    = azuredevops_team.this[each.key].name
+  default_area_path       = each.value[0].default_area_path
+  include_area_children   = each.value[0].include_area_children
+  backlog_iteration_path  = each.value[0].backlog_iteration_path
+  default_iteration_macro = each.value[0].default_iteration_macro
+
+  depends_on = [
+    azuredevops_team.this,
+  ]
+}
+
+resource "azdoboard_board_columns" "this" {
+  for_each = local.boards
+
+  project = azuredevops_project.this.name
+  team    = azuredevops_team.this[each.value.team_key].name
+  board   = each.value.board
+  columns = each.value.columns
+
+  depends_on = [
+    azdoboard_team_settings.this,
+  ]
+}
+
 resource "azuredevops_variable_group" "this" {
   for_each = local.variable_groups
 
@@ -65,6 +93,13 @@ resource "azuredevops_git_repository_file" "this" {
   depends_on = [
     azuredevops_git_repository.this,
   ]
+
+  lifecycle {
+    ignore_changes = [
+      content,
+      commit_message,
+    ]
+  }
 }
 
 resource "azuredevops_build_definition" "this" {

@@ -62,6 +62,27 @@ variable "teams" {
   default = {}
 }
 
+variable "boards" {
+  description = "Azure DevOps team board column layouts owned by this project space."
+  type = map(object({
+    team_key                = string
+    board                   = string
+    default_area_path       = optional(string)
+    include_area_children   = optional(bool, true)
+    backlog_iteration_path  = optional(string)
+    default_iteration_macro = optional(string, "@CurrentIteration")
+    columns = list(object({
+      name           = string
+      state_mappings = map(string)
+      column_type    = optional(string)
+      item_limit     = optional(number)
+      is_split       = optional(bool)
+      description    = optional(string)
+    }))
+  }))
+  default = {}
+}
+
 variable "variable_groups" {
   description = "Non-secret Azure DevOps variable groups owned by this project space."
   type = map(object({

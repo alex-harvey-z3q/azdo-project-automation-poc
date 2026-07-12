@@ -5,6 +5,18 @@ locals {
   project         = var.project
   repositories    = var.repositories
   teams           = var.teams
+  boards = {
+    for key, board in var.boards : key => board
+    if contains(keys(local.teams), board.team_key)
+  }
+  board_team_settings = {
+    for key, board in local.boards : board.team_key => {
+      default_area_path       = coalesce(board.default_area_path, local.project.name)
+      include_area_children   = board.include_area_children
+      backlog_iteration_path  = coalesce(board.backlog_iteration_path, local.project.name)
+      default_iteration_macro = board.default_iteration_macro
+    }...
+  }
   variable_groups = var.variable_groups
 
   repository_files = {

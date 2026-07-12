@@ -26,6 +26,41 @@ teams = {
   }
 }
 
+boards = {
+  platform_issues = {
+    team_key               = "platform"
+    board                  = "Issues"
+    default_area_path      = "azdo-project-automation-poc"
+    backlog_iteration_path = "azdo-project-automation-poc"
+
+    columns = [
+      {
+        name        = "To Do"
+        column_type = "incoming"
+        state_mappings = {
+          Issue = "To Do"
+        }
+      },
+      {
+        name        = "Doing"
+        column_type = "inProgress"
+        item_limit  = 5
+        is_split    = true
+        state_mappings = {
+          Issue = "Doing"
+        }
+      },
+      {
+        name        = "Done"
+        column_type = "outgoing"
+        state_mappings = {
+          Issue = "Done"
+        }
+      }
+    ]
+  }
+}
+
 variable_groups = {
   shared = {
     name         = "shared-non-secret"

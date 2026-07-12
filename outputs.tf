@@ -26,6 +26,22 @@ output "team_descriptors" {
   }
 }
 
+// Managed board column resources exported for review.
+output "board_column_ids" {
+  description = "Managed Azure DevOps board column resource IDs."
+  value = {
+    for key, board in azdoboard_board_columns.this : key => board.id
+  }
+}
+
+// Managed board team settings exported for review.
+output "board_team_setting_ids" {
+  description = "Managed Azure DevOps board team setting resource IDs."
+  value = {
+    for key, settings in azdoboard_team_settings.this : key => settings.id
+  }
+}
+
 // Managed variable group IDs exported for pipeline and permission review.
 output "variable_group_ids" {
   description = "Managed Azure DevOps variable group IDs."

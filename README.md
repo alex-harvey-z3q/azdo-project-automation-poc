@@ -18,6 +18,7 @@ This stack also manages common project-space resources:
 - Git repositories declared in `repositories`
 - Azure DevOps teams declared in `teams`
 - Non-secret variable groups declared in `variable_groups`
+- Board column layouts declared in `boards`
 - Managed repository files declared in `repository_files`
 - YAML build definitions declared in `build_definitions`
 - Default-branch pull request policies for managed repositories
@@ -43,6 +44,32 @@ customisation are intentionally not enabled in the default PoC because they are
 organisation-scoped, credential-heavy, or require identifiers that should be
 designed before being committed to state.
 
+## Custom Board Provider
+
+Repository files are treated as bootstrap seed files. Terraform creates them
+before branch policies exist, then ignores later content drift so protected
+branches are not updated directly outside pull requests.
+
+The official Azure DevOps provider does not expose every board setting. This
+repository includes a small local provider proof-of-concept at
+`providers/terraform-provider-azdoboard`.
+
+It currently configures team Area Path and backlog settings, then manages the
+columns of an existing Azure DevOps team board through the Azure DevOps Work
+REST API. The root stack wires this provider into the normal `make init`,
+`make check`, `make plan`, and `make apply` workflow. `examples/azdoboard-board`
+is retained only as a standalone reference.
+
+The Makefile writes a local `.terraformrc` that points Terraform at the provider
+binary under `providers/terraform-provider-azdoboard/bin`. Terraform will warn
+that provider development overrides are active; that is expected for this PoC.
+
+Build and test it with:
+
+```sh
+make provider-check
+```
+
 ## Outside This State
 
 Keep personal access tokens, repository contents, pipelines, service
@@ -59,6 +86,7 @@ export TF_VAR_personal_access_token="your-pat"
 For this stack, the PAT needs at least:
 
 - Project and Team: read, write, and manage
+- Boards or Work Items: read and write, for board column layout updates
 - Code: read, write, and manage
 - Build: read and execute
 - Variable Groups: read, create, and manage

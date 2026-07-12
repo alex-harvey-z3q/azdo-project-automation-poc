@@ -1,6 +1,10 @@
 .terraform/
+.terraformrc
 *.tfstate
 *.tfstate.*
 *.tfvars
 !env/*.tfvars
 !*.tfvars.example
+providers/terraform-provider-azdoboard/bin/
+providers/terraform-provider-azdoboard/.gocache/
+providers/terraform-provider-azdoboard/.gomodcache/
