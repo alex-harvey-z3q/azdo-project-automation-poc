@@ -1,9 +1,6 @@
 # AzDo Project Automation Proof-of-concept
 
-This stack demoes a minimal Azure DevOps project. The organisation itself is
-bootstrap state and is not created by this configuration.
-
-Terraform state is kept local for this proof-of-concept.
+This stack demoes a minimal Azure DevOps project.
 
 ## Model
 
@@ -85,31 +82,11 @@ external identifiers:
 - `repository_status_check_policies` for external status checks
 - `git_permissions` for group-descriptor-based Git permissions
 
-Service endpoints, agent pools, external package feeds, and inherited process
-customisation are intentionally not enabled in the default PoC because they are
-organisation-scoped, credential-heavy, or require identifiers that should be
-designed before being committed to state.
-
 ## Custom Board Provider
 
-Repository files are treated as bootstrap seed files. Terraform creates them
-before branch policies exist, then ignores later content drift so protected
-branches are not updated directly outside pull requests.
-
-The official Azure DevOps provider does not expose every board setting. This
-repository includes a small local provider proof-of-concept at
-`providers/terraform-provider-azdoboard`.
-
-It can configure team Area Path and backlog settings, then manage the columns
-of an existing Azure DevOps team board through the Azure DevOps Work REST API.
-This is disabled by default because Azure DevOps boards are built-in team
-surfaces and do not have useful destroy semantics. Set `ENABLE_BOARDS=true`
-when planning to opt in to this part of the PoC. `examples/azdoboard-board` is
-retained only as a standalone reference.
-
-The Makefile writes a local `.terraformrc` that points Terraform at the provider
-binary under `providers/terraform-provider-azdoboard/bin`. Terraform will warn
-that provider development overrides are active; that is expected for this PoC.
+An example of a custom provider for AzDo boards is also added but disabled
+by default. The official Azure DevOps provider does not expose every board
+setting. This is in `providers/terraform-provider-azdoboard`.
 
 Build and test it with:
 
@@ -117,17 +94,17 @@ Build and test it with:
 make provider-check
 ```
 
-## Note about modeling AzDo boards
+Note that AzDo boards are not standalone resources with clean create and
+destroy semantics. Thus a second solution of an idempotent Python script
+that configures the board after Terraform has created the project and teams
+is also added.
 
-Azure DevOps team boards are not standalone resources with clean create and
-destroy semantics. The better fit for board setup is an idempotent
-reconciliation step that configures the board after Terraform has
-created the project and teams.
+This is in `scripts/azdo_boards.py`.
 
-This repository includes that parallel path in `scripts/azdo_boards.py`. It
-reads the same `boards` map from `env/prod.tfvars`, resolves the Terraform team
-keys to Azure DevOps team names, updates team Area Path and backlog settings,
-and applies the desired board columns through the Azure DevOps Work REST API.
+It reads the same `boards` map from `env/prod.tfvars`, resolves the
+Terraform team keys to Azure DevOps team names, updates team Area Path and
+backlog settings, and applies the desired board columns through the Azure
+DevOps Work REST API.
 
 Run a dry-run first:
 
@@ -145,7 +122,7 @@ The reconciler uses `AZDO_PERSONAL_ACCESS_TOKEN` or
 `TF_VAR_personal_access_token`. It does not use Terraform state, provider
 development overrides, or `~/.terraformrc`.
 
-## Outside This State
+## Permissions
 
 The Azure DevOps provider expects a PAT at plan and apply time:
 
