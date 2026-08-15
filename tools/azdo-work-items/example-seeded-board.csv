@@ -1,0 +1,15 @@
+ExternalId,WorkItemType,Title,Description,ParentExternalId
+EPIC-PLATFORM,Epic,Example: Platform foundation,Example Epic used for CSV importer testing.,
+FEATURE-DELIVERY,Feature,Example: Delivery pipeline,Example Feature used for CSV importer testing.,EPIC-PLATFORM
+PBI-VALIDATION,Product Backlog Item,Example: Validation workflow,Example PBI used for CSV importer testing.,FEATURE-DELIVERY
+TASK-VALIDATION,Task,Example: Configure validation,Example Task used for CSV importer testing.,PBI-VALIDATION
+TASK-INTEGRATION,Task,Example: Run integration checks,Example Task used for CSV importer testing.,PBI-VALIDATION
+PBI-PUBLISH,Product Backlog Item,Example: Artifact publication,Example PBI used for CSV importer testing.,FEATURE-DELIVERY
+TASK-PUBLISH,Task,Example: Publish an artifact,Example Task used for CSV importer testing.,PBI-PUBLISH
+FEATURE-OBSERVABILITY,Feature,Example: Observability,Example Feature used for CSV importer testing.,EPIC-PLATFORM
+PBI-DASHBOARDS,Product Backlog Item,Example: Operational dashboards,Example PBI used for CSV importer testing.,FEATURE-OBSERVABILITY
+TASK-DASHBOARDS,Task,Example: Add dashboards,Example Task used for CSV importer testing.,PBI-DASHBOARDS
+EPIC-EXPERIENCE,Epic,Example: Product experience,Example Epic used for CSV importer testing.,
+FEATURE-WORKFLOW,Feature,Example: Backlog workflow,Example Feature used for CSV importer testing.,EPIC-EXPERIENCE
+PBI-WORKFLOW,Product Backlog Item,Example: Workflow refinement,Example PBI used for CSV importer testing.,FEATURE-WORKFLOW
+TASK-WORKFLOW,Task,Example: Define workflow,Example Task used for CSV importer testing.,PBI-WORKFLOW

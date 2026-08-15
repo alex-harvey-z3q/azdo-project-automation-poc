@@ -8,6 +8,24 @@ resource "azuredevops_project" "this" {
   features = local.project_features
 }
 
+resource "azuredevops_project_tags" "this" {
+  count = length(local.project_tags) > 0 ? 1 : 0
+
+  project_id = azuredevops_project.this.id
+  tags       = local.project_tags
+}
+
+resource "azuredevops_project_pipeline_settings" "this" {
+  project_id = azuredevops_project.this.id
+
+  enforce_job_scope                    = var.project_pipeline_settings.enforce_job_scope
+  enforce_job_scope_for_release        = var.project_pipeline_settings.enforce_job_scope_for_release
+  enforce_referenced_repo_scoped_token = var.project_pipeline_settings.enforce_referenced_repo_scoped_token
+  enforce_settable_var                 = var.project_pipeline_settings.enforce_settable_var
+  publish_pipeline_metadata            = var.project_pipeline_settings.publish_pipeline_metadata
+  status_badges_are_private            = var.project_pipeline_settings.status_badges_are_private
+}
+
 resource "azuredevops_git_repository" "this" {
   for_each = local.repositories
 
@@ -27,11 +45,78 @@ resource "azuredevops_git_repository" "this" {
   }
 }
 
+resource "azuredevops_build_folder" "this" {
+  for_each = local.build_folders
+
+  project_id  = azuredevops_project.this.id
+  path        = each.value.path
+  description = each.value.description
+}
+
 resource "azuredevops_team" "this" {
   for_each = local.teams
 
   project_id = azuredevops_project.this.id
   name       = each.value.name
+}
+
+resource "azuredevops_environment" "this" {
+  for_each = local.environments
+
+  project_id  = azuredevops_project.this.id
+  name        = each.value.name
+  description = each.value.description
+}
+
+resource "azuredevops_check_approval" "environment" {
+  for_each = local.environment_approval_checks
+
+  project_id                 = azuredevops_project.this.id
+  target_resource_id         = azuredevops_environment.this[each.value.environment_key].id
+  target_resource_type       = "environment"
+  approvers                  = each.value.approvers
+  instructions               = each.value.instructions
+  minimum_required_approvers = each.value.minimum_required_approvers
+  requester_can_approve      = each.value.requester_can_approve
+  timeout                    = each.value.timeout
+}
+
+resource "azuredevops_feed" "this" {
+  for_each = local.artifact_feeds
+
+  project_id = azuredevops_project.this.id
+  name       = each.value.name
+
+  features {
+    permanent_delete = each.value.permanent_delete
+    restore          = each.value.restore
+  }
+}
+
+resource "azuredevops_feed_retention_policy" "this" {
+  for_each = local.artifact_feeds
+
+  project_id                                = azuredevops_project.this.id
+  feed_id                                   = azuredevops_feed.this[each.key].id
+  count_limit                               = each.value.retention_count_limit
+  days_to_keep_recently_downloaded_packages = each.value.retention_days_to_keep_recently_downloaded_packages
+}
+
+resource "azuredevops_wiki" "project" {
+  count = local.wiki_enabled ? 1 : 0
+
+  project_id = azuredevops_project.this.id
+  name       = "${local.project.name}.wiki"
+  type       = "projectWiki"
+}
+
+resource "azuredevops_wiki_page" "this" {
+  for_each = local.wiki_pages
+
+  project_id = azuredevops_project.this.id
+  wiki_id    = azuredevops_wiki.project[0].id
+  path       = each.value.path
+  content    = each.value.content
 }
 
 // Optional custom-provider PoC only. Azure DevOps boards already exist as team
@@ -82,6 +167,27 @@ resource "azuredevops_variable_group" "this" {
   }
 }
 
+resource "azuredevops_serviceendpoint_generic" "this" {
+  for_each = local.generic_service_endpoints
+
+  project_id            = azuredevops_project.this.id
+  service_endpoint_name = each.value.service_endpoint_name
+  server_url            = each.value.server_url
+  username              = each.value.username
+  password              = each.value.password
+  description           = each.value.description
+}
+
+resource "azuredevops_pipeline_authorization" "this" {
+  for_each = local.pipeline_authorizations
+
+  project_id          = azuredevops_project.this.id
+  resource_id         = each.value.resource_id
+  type                = each.value.type
+  pipeline_id         = each.value.pipeline_id
+  pipeline_project_id = coalesce(each.value.pipeline_project_id, azuredevops_project.this.id)
+}
+
 resource "azuredevops_git_repository_file" "this" {
   for_each = local.repository_files
 
@@ -102,6 +208,65 @@ resource "azuredevops_git_repository_file" "this" {
       commit_message,
     ]
   }
+}
+
+resource "azuredevops_repository_policy_max_file_size" "this" {
+  count = local.repository_policy_guardrails.enabled ? 1 : 0
+
+  project_id     = azuredevops_project.this.id
+  enabled        = local.repository_policy_guardrails.enabled
+  blocking       = local.repository_policy_guardrails.blocking
+  repository_ids = local.repository_policy_repository_ids
+  max_file_size  = local.repository_policy_guardrails.max_file_size
+}
+
+resource "azuredevops_repository_policy_max_path_length" "this" {
+  count = local.repository_policy_guardrails.enabled ? 1 : 0
+
+  project_id      = azuredevops_project.this.id
+  enabled         = local.repository_policy_guardrails.enabled
+  blocking        = local.repository_policy_guardrails.blocking
+  repository_ids  = local.repository_policy_repository_ids
+  max_path_length = local.repository_policy_guardrails.max_path_length
+}
+
+resource "azuredevops_repository_policy_reserved_names" "this" {
+  count = local.repository_policy_guardrails.enabled && local.repository_policy_guardrails.enforce_reserved_names ? 1 : 0
+
+  project_id     = azuredevops_project.this.id
+  enabled        = local.repository_policy_guardrails.enabled
+  blocking       = local.repository_policy_guardrails.blocking
+  repository_ids = local.repository_policy_repository_ids
+}
+
+resource "azuredevops_repository_policy_case_enforcement" "this" {
+  count = local.repository_policy_guardrails.enabled && local.repository_policy_guardrails.enforce_consistent_case ? 1 : 0
+
+  project_id              = azuredevops_project.this.id
+  enabled                 = local.repository_policy_guardrails.enabled
+  blocking                = local.repository_policy_guardrails.blocking
+  repository_ids          = local.repository_policy_repository_ids
+  enforce_consistent_case = local.repository_policy_guardrails.enforce_consistent_case
+}
+
+resource "azuredevops_repository_policy_file_path_pattern" "this" {
+  count = local.repository_policy_guardrails.enabled && length(local.repository_policy_guardrails.filepath_patterns) > 0 ? 1 : 0
+
+  project_id        = azuredevops_project.this.id
+  enabled           = local.repository_policy_guardrails.enabled
+  blocking          = local.repository_policy_guardrails.blocking
+  repository_ids    = local.repository_policy_repository_ids
+  filepath_patterns = local.repository_policy_guardrails.filepath_patterns
+}
+
+resource "azuredevops_repository_policy_author_email_pattern" "this" {
+  count = local.repository_policy_guardrails.enabled && length(local.repository_policy_guardrails.author_email_patterns) > 0 ? 1 : 0
+
+  project_id            = azuredevops_project.this.id
+  enabled               = local.repository_policy_guardrails.enabled
+  blocking              = local.repository_policy_guardrails.blocking
+  repository_ids        = local.repository_policy_repository_ids
+  author_email_patterns = local.repository_policy_guardrails.author_email_patterns
 }
 
 resource "azuredevops_build_definition" "this" {

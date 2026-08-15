@@ -3,6 +3,7 @@ locals {
   environment     = var.environment
   org_service_url = trim(var.org_service_url, "/")
   project         = var.project
+  project_tags    = var.project_tags
   repositories    = var.repositories
   teams           = var.teams
 
@@ -22,6 +23,22 @@ locals {
     }...
   }
   variable_groups = var.variable_groups
+  build_folders   = var.build_folders
+
+  environments   = var.environments
+  artifact_feeds = var.artifact_feeds
+
+  wiki_pages   = var.wiki_pages
+  wiki_enabled = length(local.wiki_pages) > 0
+
+  generic_service_endpoints = nonsensitive(var.generic_service_endpoints)
+
+  pipeline_authorizations = var.pipeline_authorizations
+
+  environment_approval_checks = {
+    for key, check in var.environment_approval_checks : key => check
+    if contains(keys(local.environments), check.environment_key) && length(check.approvers) > 0
+  }
 
   repository_files = {
     for key, file in var.repository_files : key => file
@@ -35,11 +52,11 @@ locals {
 
   // Azure DevOps project features owned by this stack.
   project_features = {
-    boards       = "enabled"
-    repositories = "enabled"
-    pipelines    = "enabled"
-    testplans    = "disabled"
-    artifacts    = "disabled"
+    boards       = local.project.features.boards
+    repositories = local.project.features.repositories
+    pipelines    = local.project.features.pipelines
+    testplans    = local.project.features.testplans
+    artifacts    = local.project.features.artifacts
   }
 
   repository_branch_policies = var.repository_branch_policies
@@ -99,6 +116,11 @@ locals {
     for key, policy in var.repository_status_check_policies : key => policy
     if contains(keys(local.repositories), policy.repository_key)
   }
+
+  repository_policy_guardrails = var.repository_policy_guardrails
+  repository_policy_repository_ids = [
+    for repository in azuredevops_git_repository.this : repository.id
+  ]
 
   git_permissions = {
     for key, permission in var.git_permissions : key => permission

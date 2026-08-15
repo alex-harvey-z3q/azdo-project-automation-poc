@@ -1,0 +1,4 @@
+ExternalId,WorkItemType,Title,Description,ParentExternalId
+EPIC-001,Epic,Project foundation,Initial platform capability,
+FEATURE-001,Feature,Provision project space,Create the baseline project space,EPIC-001
+STORY-001,User Story,Create repositories,Set up application and platform repositories,FEATURE-001

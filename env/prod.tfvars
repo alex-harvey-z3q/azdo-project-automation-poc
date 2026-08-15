@@ -5,7 +5,28 @@ project = {
   name               = "azdo-project-automation-poc"
   description        = "Proof of concept for automated Azure DevOps project provisioning."
   visibility         = "private"
-  work_item_template = "Basic"
+  work_item_template = "Scrum"
+  features = {
+    boards       = "enabled"
+    repositories = "enabled"
+    pipelines    = "enabled"
+    testplans    = "disabled"
+    artifacts    = "enabled"
+  }
+}
+
+project_tags = [
+  "managed-by-terraform",
+  "proof-of-concept",
+]
+
+project_pipeline_settings = {
+  enforce_job_scope                    = true
+  enforce_job_scope_for_release        = true
+  enforce_referenced_repo_scoped_token = true
+  enforce_settable_var                 = true
+  publish_pipeline_metadata            = true
+  status_badges_are_private            = true
 }
 
 repositories = {
@@ -14,6 +35,17 @@ repositories = {
   }
   application = {
     name = "application"
+  }
+}
+
+build_folders = {
+  platform = {
+    path        = "\\platform"
+    description = "Build definitions for platform examples."
+  }
+  application = {
+    path        = "\\application"
+    description = "Build definitions for application examples."
   }
 }
 
@@ -26,35 +58,95 @@ teams = {
   }
 }
 
+environments = {
+  development = {
+    name        = "development"
+    description = "Placeholder deployment environment for early validation."
+  }
+  test = {
+    name        = "test"
+    description = "Placeholder deployment environment for pre-production validation."
+  }
+  production = {
+    name        = "production"
+    description = "Placeholder deployment environment for production release gates."
+  }
+}
+
+environment_approval_checks = {}
+
+artifact_feeds = {
+  internal_packages = {
+    name                                                = "internal-packages-scrum-poc"
+    permanent_delete                                    = true
+    restore                                             = false
+    retention_count_limit                               = 30
+    retention_days_to_keep_recently_downloaded_packages = 30
+  }
+}
+
+wiki_pages = {
+  home = {
+    path    = "/Home"
+    content = <<EOT
+# Project Space
+
+This wiki is managed by Terraform with generic placeholder content.
+EOT
+  }
+
+  conventions = {
+    path    = "/Conventions"
+    content = <<EOT
+# Conventions
+
+- Use repository-specific pipelines for CI.
+- Store non-secret settings in managed variable groups.
+- Store secrets outside this repository and inject them at deploy time.
+- Treat board layouts as reconciled configuration rather than Terraform-owned infrastructure.
+EOT
+  }
+}
+
 boards = {
-  platform_issues = {
+  platform_backlog_items = {
     team_key               = "platform"
-    board                  = "Issues"
+    board                  = "Backlog items"
     default_area_path      = "azdo-project-automation-poc"
     backlog_iteration_path = "azdo-project-automation-poc"
 
     columns = [
       {
-        name        = "To Do"
+        name        = "New"
         column_type = "incoming"
         state_mappings = {
-          Issue = "To Do"
+          "Product Backlog Item" = "New"
+          Bug                    = "New"
         }
       },
       {
-        name        = "Doing"
+        name        = "Approved"
         column_type = "inProgress"
         item_limit  = 5
-        is_split    = true
         state_mappings = {
-          Issue = "Doing"
+          "Product Backlog Item" = "Approved"
+          Bug                    = "Approved"
+        }
+      },
+      {
+        name        = "Committed"
+        column_type = "inProgress"
+        state_mappings = {
+          "Product Backlog Item" = "Committed"
+          Bug                    = "Committed"
         }
       },
       {
         name        = "Done"
         column_type = "outgoing"
         state_mappings = {
-          Issue = "Done"
+          "Product Backlog Item" = "Done"
+          Bug                    = "Done"
         }
       }
     ]
@@ -71,7 +163,32 @@ variable_groups = {
       OWNER       = "terraform"
     }
   }
+
+  shared_runtime = {
+    name         = "shared-runtime-settings"
+    description  = "Generic runtime placeholders shared by example pipelines."
+    allow_access = true
+    variables = {
+      LOG_LEVEL         = "info"
+      SERVICE_NAMESPACE = "example"
+      DEPLOYMENT_RING   = "placeholder"
+    }
+  }
+
+  shared_release = {
+    name         = "shared-release-settings"
+    description  = "Generic release placeholders shared by example pipelines."
+    allow_access = false
+    variables = {
+      CHANGE_REFERENCE_REQUIRED = "true"
+      RELEASE_NOTES_REQUIRED    = "true"
+    }
+  }
 }
+
+generic_service_endpoints = {}
+
+pipeline_authorizations = {}
 
 repository_files = {
   platform_readme = {
@@ -102,6 +219,17 @@ EOT
     commit_message = "Add platform pipeline"
   }
 
+  platform_docs = {
+    repository_key = "platform"
+    file           = "docs/project-space.md"
+    content        = <<EOT
+# Platform Project Space
+
+This placeholder document captures conventions that can be made project-specific later.
+EOT
+    commit_message = "Add platform project-space conventions"
+  }
+
   application_readme = {
     repository_key = "application"
     file           = "README.md"
@@ -129,6 +257,17 @@ steps:
 EOT
     commit_message = "Add application pipeline"
   }
+
+  application_docs = {
+    repository_key = "application"
+    file           = "docs/project-space.md"
+    content        = <<EOT
+# Application Project Space
+
+This placeholder document captures conventions that can be made project-specific later.
+EOT
+    commit_message = "Add application project-space conventions"
+  }
 }
 
 build_definitions = {
@@ -136,6 +275,7 @@ build_definitions = {
     name                = "platform-ci"
     repository_key      = "platform"
     yml_path            = "azure-pipelines.yml"
+    path                = "\\platform"
     variable_group_keys = ["shared"]
   }
 
@@ -143,8 +283,20 @@ build_definitions = {
     name                = "application-ci"
     repository_key      = "application"
     yml_path            = "azure-pipelines.yml"
+    path                = "\\application"
     variable_group_keys = ["shared"]
   }
+}
+
+repository_policy_guardrails = {
+  enabled                 = true
+  blocking                = true
+  max_file_size           = 10
+  max_path_length         = 240
+  enforce_reserved_names  = true
+  enforce_consistent_case = true
+  filepath_patterns       = []
+  author_email_patterns   = []
 }
 
 repository_branch_policies = {

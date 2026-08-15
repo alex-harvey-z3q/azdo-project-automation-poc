@@ -1,0 +1,9 @@
+ExternalId,WorkItemType,Title,Description,ParentExternalId,ParentWorkItemType,ParentTitle
+FEATURE-DELIVERY-QUALITY,Feature,Example: Delivery quality,Improve delivery confidence with visible checks and release evidence.,,Epic,Example: Platform foundation
+PBI-CI-REPORTING,Product Backlog Item,Example: CI result reporting,Publish build and validation outcomes for each delivery.,FEATURE-DELIVERY-QUALITY,,
+TASK-TEST-RESULTS,Task,Example: Publish test results,Publish validation results to the pipeline summary.,PBI-CI-REPORTING,,
+TASK-RELEASE-EVIDENCE,Task,Example: Capture release evidence,Record the release evidence needed for review.,PBI-CI-REPORTING,,
+PBI-ALERT-ROUTING,Product Backlog Item,Example: Alert routing,Route operational alerts to the responsible responders.,,Feature,Example: Observability
+TASK-ALERT-ROUTING,Task,Example: Configure alert routing,Configure the initial routing rules for operational alerts.,PBI-ALERT-ROUTING,,
+PBI-ACCESSIBILITY-REVIEW,Product Backlog Item,Example: Accessibility review,Review the most important workflow for accessibility concerns.,,Feature,Example: Backlog workflow
+TASK-ACCESSIBILITY-REVIEW,Task,Example: Run accessibility review,Run the initial accessibility review and record findings.,PBI-ACCESSIBILITY-REVIEW,,

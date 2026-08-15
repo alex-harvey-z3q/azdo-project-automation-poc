@@ -31,6 +31,13 @@ variable "project" {
     description        = string
     visibility         = string
     work_item_template = string
+    features = optional(object({
+      boards       = optional(string, "enabled")
+      repositories = optional(string, "enabled")
+      pipelines    = optional(string, "enabled")
+      testplans    = optional(string, "disabled")
+      artifacts    = optional(string, "enabled")
+    }), {})
   })
 
   validation {
@@ -42,6 +49,25 @@ variable "project" {
     condition     = contains(["Agile", "Basic", "CMMI", "Scrum"], var.project.work_item_template)
     error_message = "project.work_item_template must be one of Agile, Basic, CMMI, or Scrum."
   }
+}
+
+variable "project_tags" {
+  description = "Tags applied to the Azure DevOps project."
+  type        = set(string)
+  default     = []
+}
+
+variable "project_pipeline_settings" {
+  description = "Project-level pipeline hardening settings."
+  type = object({
+    enforce_job_scope                    = optional(bool, true)
+    enforce_job_scope_for_release        = optional(bool, true)
+    enforce_referenced_repo_scoped_token = optional(bool, true)
+    enforce_settable_var                 = optional(bool, true)
+    publish_pipeline_metadata            = optional(bool, true)
+    status_badges_are_private            = optional(bool, true)
+  })
+  default = {}
 }
 
 variable "repositories" {
@@ -89,6 +115,45 @@ variable "boards" {
   default = {}
 }
 
+variable "build_folders" {
+  description = "Azure Pipelines build definition folders."
+  type = map(object({
+    path        = string
+    description = optional(string, "Managed by Terraform.")
+  }))
+  default = {}
+}
+
+variable "environments" {
+  description = "Azure Pipelines deployment environments."
+  type = map(object({
+    name        = string
+    description = optional(string, "Managed by Terraform.")
+  }))
+  default = {}
+}
+
+variable "artifact_feeds" {
+  description = "Azure Artifacts feeds owned by this project space."
+  type = map(object({
+    name                                                = string
+    permanent_delete                                    = optional(bool, false)
+    restore                                             = optional(bool, false)
+    retention_count_limit                               = optional(number, 30)
+    retention_days_to_keep_recently_downloaded_packages = optional(number, 30)
+  }))
+  default = {}
+}
+
+variable "wiki_pages" {
+  description = "Project wiki pages. A project wiki is created when this map is non-empty."
+  type = map(object({
+    path    = string
+    content = string
+  }))
+  default = {}
+}
+
 variable "variable_groups" {
   description = "Non-secret Azure DevOps variable groups owned by this project space."
   type = map(object({
@@ -96,6 +161,43 @@ variable "variable_groups" {
     description  = optional(string, "Managed by Terraform.")
     allow_access = optional(bool, false)
     variables    = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "generic_service_endpoints" {
+  description = "Generic service connections. Keep empty until real endpoints and secret handling are agreed."
+  type = map(object({
+    service_endpoint_name = string
+    server_url            = string
+    username              = optional(string)
+    password              = optional(string)
+    description           = optional(string, "Managed by Terraform.")
+  }))
+  default   = {}
+  sensitive = true
+}
+
+variable "pipeline_authorizations" {
+  description = "Explicit pipeline resource authorizations for service connections or other protected resources."
+  type = map(object({
+    resource_id         = string
+    type                = string
+    pipeline_id         = optional(number)
+    pipeline_project_id = optional(string)
+  }))
+  default = {}
+}
+
+variable "environment_approval_checks" {
+  description = "Manual approval checks for managed environments. Approvers are Azure DevOps identity descriptors."
+  type = map(object({
+    environment_key            = string
+    approvers                  = set(string)
+    instructions               = optional(string, "Review and approve this deployment.")
+    minimum_required_approvers = optional(number, 1)
+    requester_can_approve      = optional(bool, false)
+    timeout                    = optional(number, 43200)
   }))
   default = {}
 }
@@ -127,6 +229,21 @@ variable "build_definitions" {
     variable_group_keys = optional(set(string), [])
     variables           = optional(map(string), {})
   }))
+  default = {}
+}
+
+variable "repository_policy_guardrails" {
+  description = "Repository push policy guardrails applied across managed repositories."
+  type = object({
+    enabled                 = optional(bool, true)
+    blocking                = optional(bool, true)
+    max_file_size           = optional(number, 10)
+    max_path_length         = optional(number, 240)
+    enforce_reserved_names  = optional(bool, true)
+    enforce_consistent_case = optional(bool, true)
+    filepath_patterns       = optional(list(string), [])
+    author_email_patterns   = optional(list(string), [])
+  })
   default = {}
 }
 

@@ -26,6 +26,36 @@ output "team_descriptors" {
   }
 }
 
+// Managed pipeline folder IDs exported for pipeline organisation review.
+output "build_folder_ids" {
+  description = "Managed Azure Pipelines folder IDs."
+  value = {
+    for key, folder in azuredevops_build_folder.this : key => folder.id
+  }
+}
+
+// Managed environment IDs exported for checks and deployment review.
+output "environment_ids" {
+  description = "Managed Azure Pipelines environment IDs."
+  value = {
+    for key, environment in azuredevops_environment.this : key => environment.id
+  }
+}
+
+// Managed feed IDs exported for artifact and permission review.
+output "artifact_feed_ids" {
+  description = "Managed Azure Artifacts feed IDs."
+  value = {
+    for key, feed in azuredevops_feed.this : key => feed.id
+  }
+}
+
+// Managed project wiki URL exported for operator access.
+output "wiki_url" {
+  description = "Managed project wiki URL."
+  value       = length(azuredevops_wiki.project) == 0 ? null : azuredevops_wiki.project[0].url
+}
+
 // Managed board column resources exported for review.
 output "board_column_ids" {
   description = "Managed Azure DevOps board column resource IDs."
@@ -47,6 +77,14 @@ output "variable_group_ids" {
   description = "Managed Azure DevOps variable group IDs."
   value = {
     for key, group in azuredevops_variable_group.this : key => group.id
+  }
+}
+
+// Managed generic service endpoint IDs exported for authorization review.
+output "generic_service_endpoint_ids" {
+  description = "Managed generic service endpoint IDs."
+  value = {
+    for key, endpoint in azuredevops_serviceendpoint_generic.this : key => endpoint.id
   }
 }
 

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "context": {
+    "org_service_url": "https://dev.azure.com/alexharv074",
+    "project": "azdo-project-automation-poc"
+  },
+  "work_items": {
+    "FEATURE-DELIVERY-QUALITY": 15,
+    "PBI-ACCESSIBILITY-REVIEW": 21,
+    "PBI-ALERT-ROUTING": 19,
+    "PBI-CI-REPORTING": 16,
+    "TASK-ACCESSIBILITY-REVIEW": 22,
+    "TASK-ALERT-ROUTING": 20,
+    "TASK-RELEASE-EVIDENCE": 18,
+    "TASK-TEST-RESULTS": 17
+  }
+}

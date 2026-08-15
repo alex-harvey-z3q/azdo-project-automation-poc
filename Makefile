@@ -4,6 +4,8 @@ ENV ?= prod
 VAR_FILE ?= env/$(ENV).tfvars
 PLAN_FILE ?= .terraform/$(ENV).tfplan
 ENABLE_BOARDS ?= false
+ORG_SERVICE_URL ?= https://dev.azure.com/alexharv074
+IMPORT_PROJECT ?= azdo-import-poc
 TF_CLI_CONFIG_FILE := $(CURDIR)/.terraformrc
 AZDOBOARD_PROVIDER_DIR := providers/terraform-provider-azdoboard
 GO_CACHE_DIR := $(CURDIR)/$(AZDOBOARD_PROVIDER_DIR)/.gocache
@@ -13,7 +15,7 @@ export TF_CLI_CONFIG_FILE
 
 .DEFAULT_GOAL := help
 
-.PHONY: help init fmt fmt-check validate check plan apply destroy output clean boards-plan boards-apply boards-test provider-devrc provider-tidy provider-build provider-test provider-check
+.PHONY: help init fmt fmt-check validate check plan apply destroy output clean seed-import-candidate import-seeded boards-plan boards-apply boards-test provider-devrc provider-tidy provider-build provider-test provider-check
 
 help: ## Show available targets.
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make <target> [ENV=prod]\n\nTargets:\n"} /^[a-zA-Z_-]+:.*##/ {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -46,6 +48,12 @@ output: provider-devrc ## Show Terraform outputs.
 
 clean: ## Remove local Terraform plan files.
 	rm -f .terraform/*.tfplan
+
+seed-import-candidate: ## Create or update the disposable Azure DevOps import rehearsal project through the REST API.
+	python3 scripts/seed_import_candidate.py --org-service-url "$(ORG_SERVICE_URL)" --project-name "$(IMPORT_PROJECT)"
+
+import-seeded: provider-build provider-devrc ## Import the disposable Azure DevOps import rehearsal project into Terraform state.
+	AZDO_ORG_SERVICE_URL="$(ORG_SERVICE_URL)" AZDO_IMPORT_PROJECT="$(IMPORT_PROJECT)" ENV_NAME=import-test scripts/import_seeded_project.sh
 
 boards-plan: ## Show intended Azure DevOps board changes without applying them.
 	python3 scripts/azdo_boards.py --var-file "$(VAR_FILE)"
